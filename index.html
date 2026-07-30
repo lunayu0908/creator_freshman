@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>SWAG新手主播教學手冊 - 水晶礦洞地圖</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
     --cave-dark:#241533;
@@ -18,6 +21,7 @@
   html,body{margin:0; padding:0; background:var(--cave-deep);}
   body{
     font-family:"Noto Sans TC","PingFang TC",sans-serif;
+    font-weight:500;
     display:flex;
     justify-content:center;
     min-height:100vh;
@@ -118,17 +122,19 @@
   }
   .node-stage{
     display:block;
-    font-size:11px;
+    font-family:"Baloo 2",sans-serif;
+    font-size:12px;
     font-weight:800;
-    letter-spacing:1.5px;
+    letter-spacing:1.8px;
     color:var(--crystal-teal);
     text-shadow:0 2px 4px rgba(0,0,0,0.9);
     margin-bottom:1px;
   }
   .node-title{
     display:block;
-    font-size:13px;
-    font-weight:700;
+    font-size:14px;
+    font-weight:900;
+    letter-spacing:0.5px;
     color:#f2e9ff;
     text-shadow:0 2px 4px rgba(0,0,0,0.9);
   }
@@ -247,8 +253,16 @@
   .modal-title{
     color:var(--crystal-gold);
     font-size:19px;
-    font-weight:800;
     margin:4px 0 12px;
+  }
+  .modal-title .stage-num{
+    font-family:"Baloo 2",sans-serif;
+    font-weight:800;
+    letter-spacing:1px;
+  }
+  .modal-title .stage-name{
+    font-weight:900;
+    letter-spacing:0.3px;
   }
   .modal-body{
     color:#e8e1f2;
@@ -258,7 +272,7 @@
   }
 
   /* ---------- 彈窗內容通用區塊樣式 ---------- */
-  .modal-card{ max-height:82vh; overflow-y:auto; }
+  .modal-card{ max-height:82vh; overflow-y:auto; overscroll-behavior:contain; }
   .modal-intro{
     font-size:13.5px;
     color:#d9cfe8;
@@ -563,6 +577,67 @@
   .next-level-btn.hidden-until-quiz{
     display:none;
   }
+
+  /* ---------- 分頁滑動 ---------- */
+  .page-nav-wrap{
+    position:relative;
+  }
+  .page-viewport{
+    overflow:hidden;
+    width:100%;
+    overscroll-behavior:contain;
+    touch-action:pan-y;
+  }
+  .page-track{
+    display:flex;
+    transition:transform 0.35s ease;
+  }
+  .page{
+    flex:0 0 100%;
+    width:100%;
+    box-sizing:border-box;
+    min-width:0;
+    padding:0 26px;
+  }
+  .page-dots{
+    display:flex;
+    justify-content:center;
+    gap:7px;
+    margin-top:14px;
+  }
+  .page-dot{
+    width:7px; height:7px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.25);
+    cursor:pointer;
+    transition:background 0.2s, transform 0.2s;
+    flex-shrink:0;
+  }
+  .page-dot.active{
+    background:var(--crystal-gold);
+    transform:scale(1.35);
+  }
+  .page-arrow{
+    position:absolute;
+    top:40%;
+    transform:translateY(-50%);
+    background:rgba(21,12,34,0.75);
+    border:1px solid rgba(255,255,255,0.25);
+    color:#e8e1f2;
+    width:28px; height:28px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    font-size:15px;
+    z-index:5;
+    font-family:inherit;
+  }
+  .page-arrow.prev{ left:0; }
+  .page-arrow.next{ right:0; }
+  .page-arrow:disabled{
+    opacity:0.2;
+    cursor:default;
+  }
 </style>
 </head>
 <body>
@@ -599,6 +674,21 @@ const CURRENT_LEVEL = 1;
 
 const mapWrap = document.getElementById('mapWrap');
 const nodeElById = {};
+
+// ---- 彈窗開啟時鎖住背景地圖的捲動，避免滑卡片時不小心捲到底下 ----
+let savedScrollY = 0;
+function lockBodyScroll(){
+  savedScrollY = window.scrollY || window.pageYOffset || 0;
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${savedScrollY}px`;
+  document.body.style.width = '100%';
+}
+function unlockBodyScroll(){
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  window.scrollTo(0, savedScrollY);
+}
 
 // ---- 本機進度紀錄：同裝置會記住解鎖到第幾關，第一次造訪則從頭開始 ----
 const PROGRESS_KEY = 'swagMapProgress_v1';
@@ -762,6 +852,7 @@ function unlockAndAdvance(currentId){
   if(!nextNode || nextNode.state !== 'locked') return;
 
   document.getElementById('modalOverlay').classList.remove('open');
+  unlockBodyScroll();
 
   setTimeout(() => {
     // 原本的「當前關卡」降級為「已解鎖」（光暈脈動停止，維持一般解鎖樣式）
@@ -999,87 +1090,144 @@ function renderGraduationButton(btn){
 }
 
 // ---- 依關卡id組出彈窗內文 ----
+function wrapPages(pages){
+  const pagesHtml = pages.map((p,i)=>`<div class="page" data-page="${i}">${p}</div>`).join('');
+  if(pages.length <= 1){
+    return `<div class="page-viewport"><div class="page-track" id="pageTrack">${pagesHtml}</div></div>`;
+  }
+  const dotsHtml = pages.map((_,i)=>`<span class="page-dot${i===0?' active':''}" data-page="${i}"></span>`).join('');
+  return `
+    <div class="page-nav-wrap">
+      <div class="page-viewport"><div class="page-track" id="pageTrack">${pagesHtml}</div></div>
+      <button class="page-arrow prev" id="pagePrev" disabled aria-label="上一頁">‹</button>
+      <button class="page-arrow next" id="pageNext" aria-label="下一頁">›</button>
+    </div>
+    <div class="page-dots" id="pageDots">${dotsHtml}</div>
+  `;
+}
+
+function bindPagination(root){
+  const track = root.querySelector('#pageTrack');
+  if(!track) return;
+  const pages = track.querySelectorAll('.page');
+  const total = pages.length;
+  const dots = root.querySelectorAll('.page-dot');
+  const prevBtn = root.querySelector('#pagePrev');
+  const nextBtn = root.querySelector('#pageNext');
+  let current = 0;
+
+  function goTo(idx){
+    current = Math.max(0, Math.min(total - 1, idx));
+    track.style.transform = `translateX(-${current * 100}%)`;
+    dots.forEach((d,i) => d.classList.toggle('active', i === current));
+    if(prevBtn) prevBtn.disabled = (current === 0);
+    if(nextBtn) nextBtn.disabled = (current === total - 1);
+  }
+
+  if(prevBtn) prevBtn.addEventListener('click', () => goTo(current - 1));
+  if(nextBtn) nextBtn.addEventListener('click', () => goTo(current + 1));
+  dots.forEach(d => d.addEventListener('click', () => goTo(parseInt(d.dataset.page))));
+
+  // 手機滑動手勢
+  let touchStartX = null;
+  track.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, {passive:true});
+  track.addEventListener('touchend', (e) => {
+    if(touchStartX === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if(Math.abs(dx) > 40){
+      if(dx < 0) goTo(current + 1); else goTo(current - 1);
+    }
+    touchStartX = null;
+  }, {passive:true});
+
+  goTo(0);
+}
+
 function buildModalHTML(id, c){
   if(!c || Object.keys(c).length === 0){
     return `<div class="modal-intro">內容製作中，之後會補上這一關的教學內容～</div>`;
   }
-  let html = renderIntro(c.intro);
+
+  let pages = [];
 
   switch(id){
     case 1:
-      html += renderTable(c.comparison_table);
-      html += renderListSection({title: c.avatar_section.title, points: c.avatar_section.points});
-      html += renderListSection({title: c.forbidden_words_section.title, points: [c.forbidden_words_section.items.join('・')]});
-      html += renderHighlight('💡 ' + c.reminder);
-      html += renderQuiz(c.quiz);
+      pages.push(renderIntro(c.intro) + renderTable(c.comparison_table));
+      pages.push(renderListSection({title: c.avatar_section.title, points: c.avatar_section.points}));
+      pages.push(
+        renderListSection({title: c.forbidden_words_section.title, points: [c.forbidden_words_section.items.join('・')]}) +
+        renderHighlight('💡 ' + c.reminder)
+      );
+      pages.push(renderQuiz(c.quiz));
       break;
     case 2:
-      html += renderListSection({title: c.hashtag_section.title, points: c.hashtag_section.points, example: c.hashtag_section.example});
-      html += renderListSection({title: c.profile_label_section.title, points: c.profile_label_section.points.concat(c.profile_label_section.form_link ? [`<a class="m-link" href="${c.profile_label_section.form_link}" target="_blank" rel="noopener">官方表單連結</a>`] : [])});
-      html += renderListSection({title: c.bio_section.title, desc: c.bio_section.description, example: c.bio_section.example_bio});
+      pages.push(renderIntro(c.intro) + renderListSection({title: c.hashtag_section.title, points: c.hashtag_section.points, example: c.hashtag_section.example}));
+      pages.push(renderListSection({title: c.profile_label_section.title, points: c.profile_label_section.points.concat(c.profile_label_section.form_link ? [`<a class="m-link" href="${c.profile_label_section.form_link}" target="_blank" rel="noopener">官方表單連結</a>`] : [])}));
+      pages.push(renderListSection({title: c.bio_section.title, desc: c.bio_section.description, example: c.bio_section.example_bio}));
       break;
     case 3:
-      html += renderListSection({title: c.scale_tag_section.title, points: c.scale_tag_section.points});
-      html += renderListSection({title: c.content_tag_section.title, desc: c.content_tag_section.example + '　' + c.content_tag_section.note});
-      html += renderListSection({title: c.title_section.title, desc: c.title_section.description, points: [`✓ 好標題：「${c.title_section.good_example}」`, `✗ 無資訊標題：「${c.title_section.bad_example}」`]});
-      html += renderListSection({title: c.voice_mode_section.title, desc: c.voice_mode_section.description, flow: null, points: c.voice_mode_section.points});
-      html += renderQuiz(c.quiz);
+      pages.push(
+        renderIntro(c.intro) +
+        renderListSection({title: c.scale_tag_section.title, points: c.scale_tag_section.points}) +
+        renderListSection({title: c.content_tag_section.title, desc: c.content_tag_section.example + '　' + c.content_tag_section.note})
+      );
+      pages.push(renderListSection({title: c.title_section.title, desc: c.title_section.description, points: [`✓ 好標題：「${c.title_section.good_example}」`, `✗ 無資訊標題：「${c.title_section.bad_example}」`]}));
+      pages.push(renderListSection({title: c.voice_mode_section.title, desc: c.voice_mode_section.description, points: c.voice_mode_section.points}));
+      pages.push(renderQuiz(c.quiz));
       break;
     case 4:
-      html += renderFlipCards(c.type_flip_cards);
+      pages.push(renderIntro(c.intro) + renderFlipCards(c.type_flip_cards));
       break;
     case 5:
-      html += renderListSection({title: c.command_revenue_section.title, desc: c.command_revenue_section.description, points: c.command_revenue_section.points});
-      html += renderListSection({title: c.superchat_revenue_section.title, desc: c.superchat_revenue_section.description, points: c.superchat_revenue_section.points});
-      html += renderListSection({title: c.mute_section.title, desc: c.mute_section.description, points: c.mute_section.points});
+      pages.push(renderIntro(c.intro) + renderListSection({title: c.command_revenue_section.title, desc: c.command_revenue_section.description, points: c.command_revenue_section.points}));
+      pages.push(renderListSection({title: c.superchat_revenue_section.title, desc: c.superchat_revenue_section.description, points: c.superchat_revenue_section.points}));
+      pages.push(renderListSection({title: c.mute_section.title, desc: c.mute_section.description, points: c.mute_section.points}));
       break;
     case 6:
-      html += renderListSection({title: c.obs_section.title, desc: c.obs_section.description, flow: c.obs_section.flow, points: c.obs_section.points});
-      html += renderListSection({title: c.toy_section.title, desc: c.toy_section.description, flow: c.toy_section.flow, points: c.toy_section.points});
-      html += renderListSection({
+      pages.push(renderIntro(c.intro) + renderListSection({title: c.obs_section.title, desc: c.obs_section.description, flow: c.obs_section.flow, points: c.obs_section.points}));
+      pages.push(renderListSection({title: c.toy_section.title, desc: c.toy_section.description, flow: c.toy_section.flow, points: c.toy_section.points}));
+      pages.push(renderListSection({
         title: c.supported_toys.title,
         points: c.supported_toys.brands.map(b=>`<b>${b.brand}</b>：${b.models}`).concat([`<a class="m-link" href="${c.supported_toys.store_link}" target="_blank" rel="noopener">官方商城購買連結</a>`])
-      });
-      html += renderQuiz(c.quiz);
+      }));
+      pages.push(renderQuiz(c.quiz));
       break;
     case 7:
-      html += renderTierList(c.tier_red, 'red');
-      html += renderTierList(c.tier_yellow, 'yellow');
-      html += renderTierList(c.tier_green, 'green');
-      html += renderTierList(c.tier_alert, 'alert');
-      html += renderMineQuiz(c.mine_quiz);
+      pages.push(renderIntro(c.intro) + renderTierList(c.tier_red, 'red'));
+      pages.push(renderTierList(c.tier_yellow, 'yellow'));
+      pages.push(renderTierList(c.tier_green, 'green') + renderTierList(c.tier_alert, 'alert'));
+      pages.push(renderMineQuiz(c.mine_quiz));
       break;
     case 8:
-      html += renderDebuffTier(c.tier_red, 'red');
-      html += renderDebuffTier(c.tier_yellow, 'yellow');
-      html += renderDebuffTier(c.tier_green, 'green');
-      html += renderHighlight('📜 ' + c.closing_note);
+      pages.push(renderIntro(c.intro) + renderDebuffTier(c.tier_red, 'red'));
+      pages.push(renderDebuffTier(c.tier_yellow, 'yellow'));
+      pages.push(renderDebuffTier(c.tier_green, 'green') + renderHighlight('📜 ' + c.closing_note));
       break;
     case 9:
-      html += renderListSection({title: c.shop_section.title, desc: c.shop_section.description});
-      html += renderHighlight(c.shop_section.tip);
-      html += renderListSection({
+      pages.push(renderIntro(c.intro) + renderListSection({title: c.shop_section.title, desc: c.shop_section.description}) + renderHighlight(c.shop_section.tip));
+      pages.push(renderListSection({
         title: c.dm_section.title,
         desc: c.dm_section.description,
         points: c.dm_section.uses.map(u=>`<b>${u.title}</b>：${u.desc}`)
-      });
-      html += renderHighlight(c.highlight);
-      html += renderListSection({title: c.cashout_reminder.title, points: c.cashout_reminder.points});
+      }));
+      pages.push(renderHighlight(c.highlight) + renderListSection({title: c.cashout_reminder.title, points: c.cashout_reminder.points}));
       break;
     case 10:
-      html += renderCrystalBall();
+      pages.push(renderIntro(c.intro) + renderCrystalBall());
       break;
   }
 
+  // 解鎖下一關按鈕放在「最後一頁」，滑到底才會看到
   if(id < NODES.length){
     const nextNode = NODES.find(n => n.id === id + 1);
     if(nextNode && nextNode.state === 'locked'){
       const requiresQuiz = !!c.quiz;
-      html += `<button class="next-level-btn${requiresQuiz ? ' hidden-until-quiz' : ''}" id="nextLevelBtn">解鎖下一關 →</button>`;
+      const lastIdx = pages.length - 1;
+      pages[lastIdx] += `<button class="next-level-btn${requiresQuiz ? ' hidden-until-quiz' : ''}" id="nextLevelBtn">解鎖下一關 →</button>`;
     }
   }
 
-  return html;
+  return wrapPages(pages);
 }
 
 function afterRenderBind(id, c, root){
@@ -1106,10 +1254,11 @@ function afterRenderBind(id, c, root){
 
 function openModal(node){
   document.getElementById('modalIcon').src = ASSETS[node.icon];
-  document.getElementById('modalTitle').textContent = `STAGE ${node.id} · ${node.title}`;
+  document.getElementById('modalTitle').innerHTML = `<span class="stage-num">STAGE ${node.id}</span> <span class="stage-name">· ${node.title}</span>`;
   const bodyEl = document.getElementById('modalBody');
   const content = LEVEL_CONTENT[node.id] || {};
   bodyEl.innerHTML = buildModalHTML(node.id, content);
+  bindPagination(bodyEl);
   afterRenderBind(node.id, content, bodyEl);
 
   const nextBtn = bodyEl.querySelector('#nextLevelBtn');
@@ -1118,12 +1267,17 @@ function openModal(node){
   }
 
   document.getElementById('modalOverlay').classList.add('open');
+  lockBodyScroll();
 }
 document.getElementById('modalClose').addEventListener('click', () => {
   document.getElementById('modalOverlay').classList.remove('open');
+  unlockBodyScroll();
 });
 document.getElementById('modalOverlay').addEventListener('click', (e) => {
-  if(e.target.id === 'modalOverlay') e.target.classList.remove('open');
+  if(e.target.id === 'modalOverlay'){
+    e.target.classList.remove('open');
+    unlockBodyScroll();
+  }
 });
 </script>
 </body>
