@@ -914,7 +914,8 @@ function loadSavedProgress(){
     const raw = localStorage.getItem(PROGRESS_KEY);
     if(raw === null) return null;
     const num = parseInt(raw, 10);
-    if(!isNaN(num) && num >= 1 && num <= NODES.length) return num;
+    // NODES.length + 1 代表「最後一關（水晶球）也已經完成」的特殊值，允許存這個值
+    if(!isNaN(num) && num >= 1 && num <= NODES.length + 1) return num;
   } catch(err){
     // 無痕模式／瀏覽器封鎖localStorage時，安靜地忽略，改用預設起始狀態
   }
@@ -1458,6 +1459,19 @@ function bindCrystalBall(root, contentObj){
         blessingEl.classList.add('show');
         if(hintEl) hintEl.style.display = 'none';
         if(btnEl) btnEl.classList.add('show');
+
+        // ---- 最後一關（水晶球開獎）視為完成，更新地圖上的探索進度 ----
+        const lastNode = NODES.find(n => n.id === NODES.length);
+        if(lastNode && lastNode.state !== 'unlocked'){
+          lastNode.state = 'unlocked';
+          const lastWrap = nodeElById[lastNode.id];
+          if(lastWrap){
+            lastWrap.classList.remove('current');
+            lastWrap.classList.add('unlocked');
+          }
+          saveProgress(NODES.length + 1); // 特殊值：代表全部關卡都已完成
+          refreshProgressAndTrack();
+        }
       }, 550);
     }, 180);
   });
