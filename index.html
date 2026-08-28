@@ -534,9 +534,10 @@ const CARDS = [
       `},
       { label:"個人標籤（最多 5 個）", html:`
         <p>用來標示你的內容特色，系統會依此把你配對給喜歡這類型的觀眾。</p>
-        <div class="chip-row">
-          <span class="chip">TAG 01</span><span class="chip">TAG 02</span><span class="chip">TAG 03</span><span class="chip">TAG 04</span><span class="chip">TAG 05</span>
-        </div>
+        <figure style="margin:10px 0 16px;">
+          <img src="shot_tag_setting.jpg" alt="個人標籤設定畫面" style="width:100%;border-radius:12px;border:1px solid var(--border);display:block;">
+          <figcaption style="font-size:11px;color:var(--text-dim);margin-top:6px;text-align:center;">個人標籤設定畫面：外貌特徵、性格特點分類選擇</figcaption>
+        </figure>
         <div class="tip">💡 要更改標籤，需要重新填寫官方表單。</div>
       `},
       { label:"自我介紹", html:`
@@ -558,6 +559,10 @@ const CARDS = [
         <div class="chip-row"><span class="chip">露點</span><span class="chip">不露點</span></div>
         <p><strong>內容標籤</strong>（1～5 個）：選對系統才會推給對的觀眾。</p>
         <div class="chip-row"><span class="chip">聊天</span><span class="chip">吃播</span><span class="chip">實戰</span><span class="chip">音樂</span></div>
+        <figure style="margin:12px 0 4px;">
+          <img src="shot_live_setting.jpg" alt="直播資訊設定畫面" style="width:100%;border-radius:12px;border:1px solid var(--border);display:block;">
+          <figcaption style="font-size:11px;color:var(--text-dim);margin-top:6px;text-align:center;">直播資訊設定畫面：類型、標題、尺度、標籤都在這一頁完成</figcaption>
+        </figure>
       `},
       { label:"開播標題怎麼下", html:`
         <p>標題就像貼在門口的公告，決定路人要不要進來。</p>
@@ -569,6 +574,10 @@ const CARDS = [
       `},
       { label:"語音直播模式", html:`
         <p>不想露臉、只想用聲音陪伴粉絲，也能一鍵開播：</p>
+        <figure style="margin:10px 0 14px;">
+          <img src="shot_live_type_toggle.jpg" alt="直播類型切換畫面" style="width:100%;border-radius:12px;border:1px solid var(--border);display:block;">
+          <figcaption style="font-size:11px;color:var(--text-dim);margin-top:6px;text-align:center;">直播資訊設定最上方：一般直播／語音直播切換</figcaption>
+        </figure>
         <div class="step-chips">
           <span class="step">開播設定</span><span class="arrow">→</span>
           <span class="step">選語音直播</span><span class="arrow">→</span>
@@ -585,6 +594,10 @@ const CARDS = [
     pages:[
       { label:"指令系統", html:`
         <p>粉絲花鑽石解鎖你設定的指令，例如脫某件衣服、做某個動作。</p>
+        <figure style="margin:10px 0 16px;">
+          <img src="shot_command_menu.jpg" alt="指令菜單設定畫面" style="width:100%;border-radius:12px;border:1px solid var(--border);display:block;">
+          <figcaption style="font-size:11px;color:var(--text-dim);margin-top:6px;text-align:center;">指令菜單畫面：每個指令可自訂價格與開關</figcaption>
+        </figure>
         <div class="range-bar">
           <div class="cap">自訂單一指令價格</div>
           <div class="track"><div class="fill" style="width:100%"></div></div>
@@ -635,6 +648,10 @@ const CARDS = [
           <span class="step">測試震動</span><span class="arrow">→</span>
           <span class="step">開播</span>
         </div>
+        <figure style="margin:12px 0 14px;">
+          <img src="shot_toy_setting.jpg" alt="設定直播玩具畫面" style="width:100%;border-radius:12px;border:1px solid var(--border);display:block;">
+          <figcaption style="font-size:11px;color:var(--text-dim);margin-top:6px;text-align:center;">設定直播玩具畫面：推薦品牌、裝置連結、震動模式菜單</figcaption>
+        </figure>
         <p style="font-size:13px">連不上時：先關機重開玩具 → 還不行就重開直播 → 還不行重開手機。</p>
         <div class="warn">⚠️ Lovense 玩具如果自己改過名字，要改回空白才能配對成功。</div>
         <p style="font-size:12.5px;color:var(--text-dim)">支援品牌：Lovense、SVAKOM、SISTALK 等特定型號，一個直播間可同時連好幾個玩具。</p>
@@ -651,6 +668,14 @@ const CARDS = [
           <li>免費內容吸引路人逛店，付費內容才是主力商品</li>
           <li>兩者搭配上架，逛店的人才願意掏鑽石</li>
         </ul>
+        <figure style="margin:12px 0 4px;">
+          <img src="shot_upload_photo.jpg" alt="照片上傳設定畫面" style="width:100%;border-radius:12px;border:1px solid var(--border);display:block;">
+          <figcaption style="font-size:11px;color:var(--text-dim);margin-top:6px;text-align:center;">上傳照片畫面：分類標籤、解鎖鑽石數滑桿、限時動態</figcaption>
+        </figure>
+        <figure style="margin:10px 0 4px;">
+          <img src="shot_upload_tags.jpg" alt="分類標籤展開畫面" style="width:100%;border-radius:12px;border:1px solid var(--border);display:block;">
+          <figcaption style="font-size:11px;color:var(--text-dim);margin-top:6px;text-align:center;">分類標籤展開頁：請如實勾選畫面有呈現的內容</figcaption>
+        </figure>
       `},
       { label:"私訊：付費客製窗口", html:`
         <p>粉絲要私訊你，本身就要花鑽石（價格自訂）。兩個用途：</p>
