@@ -263,6 +263,20 @@
     color:#e4e4e6;
     flex:1;
   }
+  .page-slide{
+    animation:slideInRight .24s cubic-bezier(.25,.8,.5,1);
+  }
+  .page-slide.from-left{
+    animation-name:slideInLeft;
+  }
+  @keyframes slideInRight{
+    from{ opacity:0; transform:translateX(22px); }
+    to{ opacity:1; transform:translateX(0); }
+  }
+  @keyframes slideInLeft{
+    from{ opacity:0; transform:translateX(-22px); }
+    to{ opacity:1; transform:translateX(0); }
+  }
   .modal-body ul{
     margin:0 0 4px;
     padding-left:18px;
@@ -862,11 +876,15 @@ function openModal(c, accent){
   dotsEl.innerHTML = "";
   c.pages.forEach((p, idx) => {
     const d = document.createElement("span");
-    d.addEventListener("click", () => { currentPage = idx; renderPage(); });
+    d.addEventListener("click", () => {
+      const dir = idx > currentPage ? "next" : (idx < currentPage ? "prev" : null);
+      currentPage = idx;
+      renderPage(dir);
+    });
     dotsEl.appendChild(d);
   });
 
-  renderPage();
+  renderPage(null);
   backdrop.classList.add("open");
   document.body.style.overflow = "hidden";
 
@@ -878,11 +896,12 @@ function openModal(c, accent){
   }
 }
 
-function renderPage(){
+function renderPage(direction){
   const total = currentCard.pages.length;
   const page = currentCard.pages[currentPage];
   pageLabel.textContent = page.label;
-  modalBody.innerHTML = page.html;
+  const slideClass = direction === "prev" ? "page-slide from-left" : "page-slide";
+  modalBody.innerHTML = `<div class="${slideClass}">${page.html}</div>`;
   modalBody.scrollTop = 0;
 
   [...dotsEl.children].forEach((d, idx) => d.classList.toggle("active", idx === currentPage));
@@ -896,11 +915,11 @@ function renderPage(){
 }
 
 btnPrev.addEventListener("click", () => {
-  if(currentPage > 0){ currentPage--; renderPage(); }
+  if(currentPage > 0){ currentPage--; renderPage("prev"); }
 });
 btnNext.addEventListener("click", () => {
   const total = currentCard.pages.length;
-  if(currentPage < total - 1){ currentPage++; renderPage(); }
+  if(currentPage < total - 1){ currentPage++; renderPage("next"); }
   else { closeModal(); }
 });
 
@@ -922,8 +941,8 @@ modalBody.addEventListener("touchend", (e) => {
   const dx = e.changedTouches[0].clientX - touchStartX;
   if(Math.abs(dx) < 50) return;
   const total = currentCard.pages.length;
-  if(dx < 0 && currentPage < total - 1){ currentPage++; renderPage(); }
-  else if(dx > 0 && currentPage > 0){ currentPage--; renderPage(); }
+  if(dx < 0 && currentPage < total - 1){ currentPage++; renderPage("next"); }
+  else if(dx > 0 && currentPage > 0){ currentPage--; renderPage("prev"); }
 }, {passive:true});
 </script>
 
