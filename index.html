@@ -507,7 +507,43 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="gameBackdrop">
+  <div class="modal" id="gameModalEl" style="max-width:420px;">
+    <div class="modal-head">
+      <div class="h-left">
+        <span class="badge">🥊</span>
+        <h2>難纏用戶大作戰</h2>
+      </div>
+      <button id="gameClose" aria-label="關閉">✕</button>
+    </div>
+    <div style="padding:0 18px 20px;">
+      <div id="gameStage" style="position:relative;height:150px;background:rgba(255,255,255,0.03);border-radius:14px;overflow:hidden;margin-bottom:14px;">
+        <img id="userAvatar" src="uncle_shouting.png" alt="難纏用戶" style="position:absolute;bottom:0;right:12px;height:130px;">
+        <div id="speechBubble" style="position:absolute;top:10px;left:10px;max-width:64%;background:#fff;color:#161616;padding:8px 11px;border-radius:12px 12px 12px 2px;font-size:12px;line-height:1.4;font-weight:700;"></div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-bottom:5px;"><span>用戶血量</span><span id="hpLabel">100</span></div>
+        <div style="height:11px;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden;">
+          <div id="hpFill" style="height:100%;width:100%;background:linear-gradient(90deg,var(--c2),var(--c3));transition:width .25s ease;"></div>
+        </div>
+      </div>
+
+      <div id="gameMsg" style="text-align:center;font-size:13px;font-weight:700;min-height:20px;margin-bottom:6px;"></div>
+
+      <div id="gameArena" style="position:relative;height:190px;background:rgba(255,255,255,0.02);border-radius:14px;border:1px solid var(--border);"></div>
+
+      <div id="gameEndPanel" style="display:none;text-align:center;padding-top:14px;">
+        <p style="font-size:16px;font-weight:900;margin:4px 0 6px;">🎉 用戶冷靜下來了！</p>
+        <p style="font-size:12.5px;color:var(--text-dim);margin:0 0 14px;line-height:1.6;">實際遇到情緒勒索型用戶，記得善用「禁言」功能就好，不用真的動氣～</p>
+        <button id="gameRestart" style="border:none;background:var(--accent);color:#0c0c10;font-weight:700;border-radius:10px;padding:9px 20px;font-size:13px;cursor:pointer;">再玩一次</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+
 const COLORS = ["var(--c1)","var(--c2)","var(--c3)","var(--c4)"];
 
 const CARDS = [
@@ -864,6 +900,15 @@ extBtn.style.setProperty("--accent", extAccent);
 extBtn.innerHTML = `<span class="badge">🏆</span><span class="title">本週排行榜\n看看誰是本週之星</span>`;
 grid.appendChild(extBtn);
 
+// 小遊戲卡片
+const gameAccent = COLORS[1];
+const gameBtn = document.createElement("button");
+gameBtn.className = "card";
+gameBtn.style.setProperty("--accent", gameAccent);
+gameBtn.innerHTML = `<span class="badge">🥊</span><span class="title">累了嗎？\n來玩個遊戲吧！</span>`;
+gameBtn.addEventListener("click", openGame);
+grid.appendChild(gameBtn);
+
 const backdrop = document.getElementById("modalBackdrop");
 const modalEl = document.getElementById("modalEl");
 const modalIcon = document.getElementById("modalIcon");
@@ -956,6 +1001,138 @@ modalBody.addEventListener("touchend", (e) => {
   if(dx < 0 && currentPage < total - 1){ currentPage++; renderPage("next"); }
   else if(dx > 0 && currentPage > 0){ currentPage--; renderPage("prev"); }
 }, {passive:true});
+
+// ===== 難纏用戶大作戰 小遊戲 =====
+const gameBackdrop = document.getElementById("gameBackdrop");
+const gameModalEl = document.getElementById("gameModalEl");
+const gameClose = document.getElementById("gameClose");
+const gameArena = document.getElementById("gameArena");
+const gameMsg = document.getElementById("gameMsg");
+const hpFill = document.getElementById("hpFill");
+const hpLabel = document.getElementById("hpLabel");
+const speechBubble = document.getElementById("speechBubble");
+const userAvatar = document.getElementById("userAvatar");
+const gameEndPanel = document.getElementById("gameEndPanel");
+const gameRestart = document.getElementById("gameRestart");
+
+const NAG_LINES = [
+  "你是不是根本不在乎我？",
+  "我充了那麼多鑽石，你卻不理我！",
+  "別的主播都會陪我聊到很晚耶",
+  "你要是喜歡我就該多陪陪我吧",
+  "我要去別的平台了，看你怎麼辦",
+  "你現在紅了，是不是想拋棄老粉？",
+  "別人都說你只想要我的錢",
+  "我今天心情不好，你要哄哄我",
+  "你不多聊幾句，我就打負評",
+  "當初是你先理我的，憑什麼現在不理"
+];
+
+let gameHp = 100;
+let gameDuration = 850;
+let noteTimer = null;
+let expireTimer = null;
+let gameRunning = false;
+
+function openGame(){
+  gameModalEl.style.setProperty("--accent", gameAccent);
+  gameEndPanel.style.display = "none";
+  gameArena.style.display = "block";
+  gameHp = 100;
+  gameDuration = 850;
+  updateHp();
+  userAvatar.src = "uncle_shouting.png";
+  gameBackdrop.classList.add("open");
+  document.body.style.overflow = "hidden";
+  gameRunning = true;
+  gameArena.innerHTML = "";
+  gameMsg.textContent = "";
+  spawnNote();
+}
+
+function closeGame(){
+  gameRunning = false;
+  clearTimeout(noteTimer);
+  clearTimeout(expireTimer);
+  gameModalEl.classList.add("closing");
+  setTimeout(() => {
+    gameBackdrop.classList.remove("open");
+    gameModalEl.classList.remove("closing");
+    document.body.style.overflow = "";
+  }, 150);
+}
+gameClose.addEventListener("click", closeGame);
+gameBackdrop.addEventListener("click", (e) => { if(e.target === gameBackdrop) closeGame(); });
+gameRestart.addEventListener("click", openGame);
+
+function updateHp(){
+  hpFill.style.width = Math.max(gameHp,0) + "%";
+  hpLabel.textContent = Math.max(gameHp,0);
+  if(gameHp <= 50 && gameHp > 0) userAvatar.src = "uncle_fuming.png";
+}
+
+function spawnNote(){
+  if(!gameRunning) return;
+  speechBubble.textContent = NAG_LINES[Math.floor(Math.random()*NAG_LINES.length)];
+
+  const size = 50;
+  const arenaW = gameArena.clientWidth;
+  const arenaH = gameArena.clientHeight;
+  const x = Math.random() * (arenaW - size - 16) + 8;
+  const y = Math.random() * (arenaH - size - 16) + 8;
+
+  const note = document.createElement("div");
+  note.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:${size}px;height:${size}px;cursor:pointer;`;
+  note.innerHTML = `
+    <div style="position:absolute;inset:0;border-radius:50%;background:color-mix(in srgb, var(--accent) 35%, transparent);border:2px solid var(--accent);"></div>
+    <div class="note-approach" style="position:absolute;top:50%;left:50%;width:${size}px;height:${size}px;margin:-${size/2}px 0 0 -${size/2}px;border-radius:50%;border:3px solid #fff;transform:scale(3);opacity:.9;transition:transform ${gameDuration}ms linear, opacity ${gameDuration}ms linear;"></div>
+  `;
+  gameArena.appendChild(note);
+
+  const spawnTime = performance.now();
+  const approach = note.querySelector(".note-approach");
+  requestAnimationFrame(() => {
+    approach.style.transform = "scale(1)";
+    approach.style.opacity = "0.15";
+  });
+
+  function cleanupAndNext(){
+    if(note.parentNode) note.parentNode.removeChild(note);
+    noteTimer = setTimeout(spawnNote, 260);
+  }
+
+  note.addEventListener("click", () => {
+    if(!gameRunning) return;
+    const elapsed = performance.now() - spawnTime;
+    if(elapsed < gameDuration * 0.55){
+      gameMsg.textContent = "太早了，再等一下！";
+      gameMsg.style.color = "var(--c3)";
+      return;
+    }
+    clearTimeout(expireTimer);
+    gameHp -= 10;
+    gameMsg.textContent = "命中！";
+    gameMsg.style.color = "var(--c1)";
+    updateHp();
+    if(gameHp <= 0){
+      gameRunning = false;
+      userAvatar.src = "uncle_calm.png";
+      gameArena.style.display = "none";
+      gameEndPanel.style.display = "block";
+      return;
+    }
+    gameDuration = Math.max(500, gameDuration - 30);
+    cleanupAndNext();
+  });
+
+  expireTimer = setTimeout(() => {
+    if(!gameRunning) return;
+    gameMsg.textContent = "被閃過了…";
+    gameMsg.style.color = "var(--c2)";
+    cleanupAndNext();
+  }, gameDuration + 150);
+}
+
 </script>
 
 </body>
