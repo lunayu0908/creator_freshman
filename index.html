@@ -30,10 +30,14 @@
     inset:0;
     z-index:0;
     pointer-events:none;
-    background:
+    background-image:
       radial-gradient(480px 320px at 12% -6%, rgba(0,210,190,0.16), transparent 60%),
       radial-gradient(420px 300px at 92% 8%, rgba(246,65,141,0.14), transparent 60%),
-      radial-gradient(500px 380px at 50% 100%, rgba(155,107,255,0.10), transparent 60%);
+      radial-gradient(500px 380px at 50% 100%, rgba(155,107,255,0.10), transparent 60%),
+      linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+    background-size:auto, auto, auto, 34px 34px, 34px 34px;
+    mask-image:linear-gradient(to bottom, black, black 70%, transparent 100%);
   }
   .wrap{
     position:relative;
@@ -45,19 +49,20 @@
   header{
     margin-bottom:24px;
     position:relative;
+    text-align:center;
   }
   header .eyebrow{
     display:inline-flex;
     align-items:center;
-    gap:6px;
-    font-size:12px;
-    font-weight:700;
+    gap:7px;
+    font-size:16px;
+    font-weight:900;
     letter-spacing:.06em;
     color:#0c0c10;
     background:linear-gradient(90deg, var(--c1), var(--c4));
     border-radius:999px;
-    padding:5px 13px;
-    margin-bottom:12px;
+    padding:8px 22px;
+    margin-bottom:14px;
   }
   header h1{
     font-size:23px;
@@ -84,7 +89,7 @@
   }
   .card{
     position:relative;
-    background:linear-gradient(160deg, var(--surface-hi), var(--surface));
+    background:linear-gradient(160deg, color-mix(in srgb, var(--accent) 16%, var(--surface-hi)), color-mix(in srgb, var(--accent) 5%, var(--surface)));
     border:1px solid var(--border);
     border-radius:18px;
     padding:16px 14px 15px;
@@ -437,7 +442,7 @@
 
 <div class="wrap">
   <header>
-    <span class="eyebrow">✦ SWAG 新主播手冊</span>
+    <span class="eyebrow">✦ SWAG 新手教學</span>
     <h1>想查什麼，點下面就對了</h1>
     <p>不用照順序看，遇到問題直接找對應的卡片，一頁一頁翻更好讀。</p>
   </header>
@@ -457,6 +462,13 @@
       <span>
         SWAG 創作者招募 Instagram
         <span class="sub">追蹤看更多創作者資訊</span>
+      </span>
+    </a>
+    <a class="link-btn" href="https://lin.ee/zya93wT" target="_blank" rel="noopener">
+      <span class="ico">💬</span>
+      <span>
+        官方招募 LINE
+        <span class="sub">有問題直接找經紀聯繫</span>
       </span>
     </a>
   </footer>
